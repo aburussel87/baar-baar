@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #3b82f6;
+  --color-primary-dark: #2563eb;
+  --color-bg-light: #f3f4f6;
+  --color-bg-dark: #111827;
+  --color-text-light: #f9fafb;
+  --color-text-dark: #1f2937;
+}
+
+@layer base {
+  body {
+    @apply antialiased text-gray-900 bg-gray-50;
+  }
+}
+
+.glass {
+  @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-lg;
+}
