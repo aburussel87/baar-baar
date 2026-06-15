@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MessageSquare, Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react';
-import { GoogleLogin } from '@react-oauth/google';
+//import { GoogleLogin } from '@react-oauth/google';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { generateKeyPair } from '../utils/crypto';
@@ -56,24 +56,24 @@ const Register = () => {
     navigate('/chat');
   };
 
-  const handleGoogleSuccess = async (credentialResponse: any) => {
-    try {
-      setLoading(true);
-      setError('');
-      const keys = await generateKeyPair();
-      const res = await api.post('/api/auth/google', {
-        token: credentialResponse.credential,
-        publicKey: keys.publicKey
-      });
-      if (res.data.success) {
-        login({ ...res.data.data, privateKey: keys.privateKey });
-        navigate('/chat');
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Google login failed');
-      setLoading(false);
-    }
-  };
+  // const handleGoogleSuccess = async (credentialResponse: any) => {
+  //   try {
+  //     setLoading(true);
+  //     setError('');
+  //     const keys = await generateKeyPair();
+  //     const res = await api.post('/api/auth/google', {
+  //       token: credentialResponse.credential,
+  //       publicKey: keys.publicKey
+  //     });
+  //     if (res.data.success) {
+  //       login({ ...res.data.data, privateKey: keys.privateKey });
+  //       navigate('/chat');
+  //     }
+  //   } catch (err: any) {
+  //     setError(err.response?.data?.message || 'Google login failed');
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100 via-gray-50 to-white px-4 py-12">

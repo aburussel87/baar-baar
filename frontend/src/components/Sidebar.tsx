@@ -4,7 +4,7 @@ import { Search, LogOut, MessageSquare, Users, X, Loader2, Settings } from 'luci
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
-import { decryptMessageWithPrivateKey } from '../utils/crypto';
+//import { decryptMessageWithPrivateKey } from '../utils/crypto';
 import type { Conversation, User } from '../types';
 
 interface SidebarProps {
@@ -13,7 +13,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeConversation, setActiveConversation }) => {
-  const { user, logout, updateUser } = useAuth();
+  const { user, logout } = useAuth();
   const { onlineUsers } = useSocket();
   const queryClient = useQueryClient();
   
@@ -25,7 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeConversation, setActiveConversa
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   
   const [settingsName, setSettingsName] = useState(user?.name || '');
-  const [settingsAvatar, setSettingsAvatar] = useState(user?.avatar || '');
+  //const [settingsAvatar, setSettingsAvatar] = useState(user?.avatar || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [settingsError, setSettingsError] = useState('');
@@ -96,9 +96,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeConversation, setActiveConversa
     setSettingsSuccess('');
     setSettingsLoading(true);
     try {
-      const res = await api.put('/api/users/profile', { name: settingsName, avatar: settingsAvatar });
-      updateUser(res.data.data);
-      setSettingsSuccess('Profile updated successfully');
+      //const res = await api.put('/api/users/profile', { name: settingsName, avatar: settingsAvatar });
+      //updateUser(res.data.data);
+      //setSettingsSuccess('Profile updated successfully');
     } catch (err: any) {
       setSettingsError(err.response?.data?.message || 'Failed to update profile');
     } finally {

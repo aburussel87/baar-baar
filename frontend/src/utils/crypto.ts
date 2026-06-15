@@ -93,7 +93,7 @@ export const encryptAES = async (message: string, key: CryptoKey) => {
     encoded
   );
   return {
-    iv: arrayBufferToBase64(iv),
+    iv: arrayBufferToBase64(iv.buffer),
     ciphertext: arrayBufferToBase64(ciphertext)
   };
 };
