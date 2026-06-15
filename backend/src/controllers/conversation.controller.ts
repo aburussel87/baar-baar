@@ -200,3 +200,64 @@ export const createGroupConversation = async (req: AuthRequest, res: Response) =
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+export const leaveGroup = async (req: AuthRequest, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const conversation = await prisma.conversation.findUnique({
+      where: { id },
+      include: { participants: true }
+    });
+
+    if (!conversation || !conversation.isGroup) {
+      return res.status(404).json({ success: false, message: 'Group not found' });
+    }
+
+    const participant = conversation.participants.find(p => p.userId === userId);
+    if (!participant) {
+      return res.status(400).json({ success: false, message: 'Not a member of this group' });
+    }
+
+    await prisma.conversationParticipant.delete({
+      where: { id: participant.id }
+    });
+
+    res.json({ success: true, message: 'Left group successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const clearConversation = async (req: AuthRequest, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const participant = await prisma.conversationParticipant.findFirst({
+      where: { conversationId: id, userId }
+    });
+
+    if (!participant) {
+      return res.status(404).json({ success: false, message: 'Conversation not found' });
+    }
+
+    await prisma.conversationParticipant.update({
+      where: { id: participant.id },
+      data: { clearedAt: new Date() }
+    });
+
+    res.json({ success: true, message: 'Conversation cleared successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};

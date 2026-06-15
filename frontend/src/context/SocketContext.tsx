@@ -17,8 +17,10 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   useEffect(() => {
     if (user) {
-      const envUrl = import.meta.env.VITE_SOCKET_URL;
-      const socketUrl = (envUrl && !envUrl.includes('localhost')) ? envUrl : `http://${window.location.hostname}:5001`;
+      const envUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL;
+      const socketUrl = envUrl
+        ? envUrl.replace(/\/$/, '')
+        : `http://${window.location.hostname}:5000`;
       
       const newSocket = io(socketUrl, {
         query: {

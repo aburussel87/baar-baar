@@ -8,16 +8,32 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  avatar    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String       @id @default(uuid())
+  name         String
+  email        String       @unique
+  password     String?      // Optional for Google users
+  avatar       String?
+  authProvider AuthProvider @default(LOCAL)
+  googleId     String?      @unique
+  isVerified   Boolean      @default(false)
+  publicKey    String?      @db.Text // Store user's public key for E2EE
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   conversations ConversationParticipant[]
   messages      Message[]
+  otps          Otp[]
+}
+
+model Otp {
+  id        String   @id @default(uuid())
+  userId    String
+  code      String
+  type      OtpType
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Conversation {
@@ -36,6 +52,7 @@ model ConversationParticipant {
   userId         String
   conversationId String
   joinedAt       DateTime @default(now())
+  clearedAt      DateTime? // Messages before this time are hidden for this user
 
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -67,4 +84,14 @@ enum MessageStatus {
   SENT
   DELIVERED
   READ
+}
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+}
+
+enum OtpType {
+  VERIFY_EMAIL
+  RESET_PASSWORD
 }

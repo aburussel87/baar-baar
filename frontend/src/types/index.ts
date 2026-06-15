@@ -3,6 +3,7 @@ export interface User {
   name: string;
   email: string;
   avatar: string;
+  publicKey?: string;
   createdAt: string;
   updatedAt: string;
 }

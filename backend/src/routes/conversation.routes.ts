@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { getConversations, createConversation, getConversationById, createGroupConversation } from '../controllers/conversation.controller';
+import { getConversations, createConversation, getConversationById, createGroupConversation, leaveGroup, clearConversation } from '../controllers/conversation.controller';
 import { validateRequest } from '../middleware/validate.middleware';
 import { protect } from '../middleware/auth.middleware';
 
@@ -25,5 +25,7 @@ router.get('/', getConversations);
 router.post('/group', validateRequest(createGroupSchema), createGroupConversation);
 router.post('/', validateRequest(createConvSchema), createConversation);
 router.get('/:id', getConversationById);
+router.delete('/:id/leave', leaveGroup);
+router.delete('/:id/clear', clearConversation);
 
 export default router;

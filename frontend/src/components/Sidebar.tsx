@@ -1,25 +1,36 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, LogOut, MessageSquare, Users, X, Loader2 } from 'lucide-react';
+import { Search, LogOut, MessageSquare, Users, X, Loader2, Settings } from 'lucide-react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
+import { decryptMessageWithPrivateKey } from '../utils/crypto';
 import type { Conversation, User } from '../types';
 
 interface SidebarProps {
   activeConversation: Conversation | null;
-  setActiveConversation: (c: Conversation) => void;
+  setActiveConversation: (c: Conversation | null) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeConversation, setActiveConversation }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const { onlineUsers } = useSocket();
   const queryClient = useQueryClient();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [showGroupModal, setShowGroupModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  
   const [groupName, setGroupName] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  
+  const [settingsName, setSettingsName] = useState(user?.name || '');
+  const [settingsAvatar, setSettingsAvatar] = useState(user?.avatar || '');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [settingsError, setSettingsError] = useState('');
+  const [settingsSuccess, setSettingsSuccess] = useState('');
+  const [settingsLoading, setSettingsLoading] = useState(false);
 
   const { data: conversationsData, isLoading: convLoading } = useQuery({
     queryKey: ['conversations'],
@@ -79,23 +90,136 @@ const Sidebar: React.FC<SidebarProps> = ({ activeConversation, setActiveConversa
     );
   };
 
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSettingsError('');
+    setSettingsSuccess('');
+    setSettingsLoading(true);
+    try {
+      const res = await api.put('/api/users/profile', { name: settingsName, avatar: settingsAvatar });
+      updateUser(res.data.data);
+      setSettingsSuccess('Profile updated successfully');
+    } catch (err: any) {
+      setSettingsError(err.response?.data?.message || 'Failed to update profile');
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSettingsError('');
+    setSettingsSuccess('');
+    setSettingsLoading(true);
+    try {
+      await api.put('/api/users/password', { currentPassword, newPassword });
+      setSettingsSuccess('Password updated successfully');
+      setCurrentPassword('');
+      setNewPassword('');
+    } catch (err: any) {
+      setSettingsError(err.response?.data?.message || 'Failed to update password');
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  const decryptLastMessage = (body: string) => {
+    if (body.startsWith('{"v":1')) {
+       return "[Encrypted Message]"; // Decrypting synchronously is tricky, just show label in sidebar
+    }
+    return body;
+  };
+
   return (
-    <div className="w-80 border-r border-gray-200 bg-white flex flex-col h-full shrink-0 relative">
+    <div className="w-full md:w-80 border-r border-gray-200 bg-white flex flex-col h-full shrink-0 relative">
       {/* Header Profile */}
       <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
-        <div className="flex items-center space-x-3">
-          <img src={user?.avatar} alt={user?.name} className="w-10 h-10 rounded-full bg-gray-200" />
-          <div className="font-semibold text-gray-800">{user?.name}</div>
+        <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setShowSettingsModal(true)}>
+          <img src={user?.avatar} alt={user?.name} className="w-10 h-10 rounded-full bg-gray-200 hover:opacity-80 transition-opacity" />
+          <div className="font-semibold text-gray-800 hover:text-blue-600 transition-colors">{user?.name}</div>
         </div>
         <div className="flex items-center space-x-1">
           <button onClick={() => setShowGroupModal(true)} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors" title="Create Group">
             <Users className="w-5 h-5" />
+          </button>
+          <button onClick={() => setShowSettingsModal(true)} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors" title="Settings">
+            <Settings className="w-5 h-5" />
           </button>
           <button onClick={logout} className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors" title="Logout">
             <LogOut className="w-5 h-5" />
           </button>
         </div>
       </div>
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <div className="absolute inset-0 z-30 bg-white flex flex-col overflow-y-auto">
+          <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 sticky top-0 z-10">
+            <h2 className="font-semibold text-gray-800">Settings</h2>
+            <button onClick={() => setShowSettingsModal(false)} className="p-1 text-gray-500 hover:bg-gray-200 rounded-full">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="p-4 space-y-6 flex-1">
+            {settingsError && <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{settingsError}</div>}
+            {settingsSuccess && <div className="text-green-600 text-sm bg-green-50 p-3 rounded-lg">{settingsSuccess}</div>}
+
+            <form onSubmit={handleUpdateProfile} className="space-y-4">
+              <h3 className="font-medium text-gray-800 border-b pb-2">Profile</h3>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Name</label>
+                <input
+                  type="text"
+                  value={settingsName}
+                  onChange={e => setSettingsName(e.target.value)}
+                  className="w-full p-2 border rounded-lg focus:ring-blue-500 outline-none"
+                  required
+                />
+              </div>
+              {/* <div>
+                <label className="block text-xs text-gray-500 mb-1">Avatar URL</label>
+                <input
+                  type="url"
+                  value={settingsAvatar}
+                  onChange={e => setSettingsAvatar(e.target.value)}
+                  className="w-full p-2 border rounded-lg focus:ring-blue-500 outline-none"
+                />
+              </div> */}
+              <button disabled={settingsLoading} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm disabled:opacity-50">
+                Update Profile
+              </button>
+            </form>
+
+            <form onSubmit={handleUpdatePassword} className="space-y-4">
+              <h3 className="font-medium text-gray-800 border-b pb-2">Change Password</h3>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Current Password</label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={e => setCurrentPassword(e.target.value)}
+                  className="w-full p-2 border rounded-lg focus:ring-blue-500 outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">New Password</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  className="w-full p-2 border rounded-lg focus:ring-blue-500 outline-none"
+                  required
+                  minLength={6}
+                />
+              </div>
+              <button disabled={settingsLoading} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm disabled:opacity-50">
+                Update Password
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Group Modal */}
       {showGroupModal && (
@@ -251,7 +375,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeConversation, setActiveConversa
                         )}
                       </div>
                       <p className={`text-sm truncate ${lastMessage?.status !== 'READ' && lastMessage?.senderId !== user?.id ? 'font-semibold text-gray-800' : 'text-gray-500'}`}>
-                        {lastMessage?.body || (isGroup ? 'Group created' : 'Started a conversation')}
+                        {lastMessage?.body ? decryptLastMessage(lastMessage.body) : (isGroup ? 'Group created' : 'Started a conversation')}
                       </p>
                     </div>
                   </div>

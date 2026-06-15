@@ -30,6 +30,7 @@ export const getMessages = async (req: AuthRequest, res: Response) => {
     const messages = await prisma.message.findMany({
       where: {
         conversationId,
+        ...(conversation.clearedAt ? { createdAt: { gt: conversation.clearedAt } } : {}),
       },
       take: 21, // Fetch one extra to determine if there are more
       ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
