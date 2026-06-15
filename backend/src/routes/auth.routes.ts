@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { register, login, getMe, verifyOtp, resendOtp, googleLogin } from '../controllers/auth.controller';
+import { register, login, getMe, googleLogin } from '../controllers/auth.controller';
 import { validateRequest } from '../middleware/validate.middleware';
 import { protect } from '../middleware/auth.middleware';
 
@@ -23,19 +23,6 @@ const loginSchema = z.object({
   }),
 });
 
-const verifyOtpSchema = z.object({
-  body: z.object({
-    email: z.string().email('Invalid email address'),
-    code: z.string().min(6, 'OTP must be 6 characters'),
-    publicKey: z.string().optional(),
-  }),
-});
-
-const resendOtpSchema = z.object({
-  body: z.object({
-    email: z.string().email('Invalid email address'),
-  }),
-});
 
 const googleLoginSchema = z.object({
   body: z.object({
@@ -45,8 +32,6 @@ const googleLoginSchema = z.object({
 });
 
 router.post('/register', validateRequest(registerSchema), register);
-router.post('/verify-otp', validateRequest(verifyOtpSchema), verifyOtp);
-router.post('/resend-otp', validateRequest(resendOtpSchema), resendOtp);
 router.post('/login', validateRequest(loginSchema), login);
 router.post('/google', validateRequest(googleLoginSchema), googleLogin);
 router.get('/me', protect, getMe);

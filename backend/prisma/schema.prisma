@@ -15,26 +15,14 @@ model User {
   avatar       String?
   authProvider AuthProvider @default(LOCAL)
   googleId     String?      @unique
-  isVerified   Boolean      @default(false)
   publicKey    String?      @db.Text // Store user's public key for E2EE
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
   conversations ConversationParticipant[]
   messages      Message[]
-  otps          Otp[]
 }
 
-model Otp {
-  id        String   @id @default(uuid())
-  userId    String
-  code      String
-  type      OtpType
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
 
 model Conversation {
   id        String   @id @default(uuid())
@@ -91,7 +79,3 @@ enum AuthProvider {
   GOOGLE
 }
 
-enum OtpType {
-  VERIFY_EMAIL
-  RESET_PASSWORD
-}

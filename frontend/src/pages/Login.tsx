@@ -5,17 +5,12 @@ import { MessageSquare, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { generateKeyPair } from '../utils/crypto';
-import VerifyOtpForm from '../components/VerifyOtpForm';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showOtp, setShowOtp] = useState(false);
-  const [tempPrivateKey, setTempPrivateKey] = useState<string | null>(null);
-  const [tempPublicKey, setTempPublicKey] = useState<string | null>(null);
-
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -26,8 +21,6 @@ const Login = () => {
 
     try {
       const keys = await generateKeyPair();
-      setTempPrivateKey(keys.privateKey);
-      setTempPublicKey(keys.publicKey);
 
       const response = await api.post('/api/auth/login', { 
         email, 
@@ -40,21 +33,12 @@ const Login = () => {
         navigate('/chat');
       }
     } catch (err: any) {
-      if (err.response?.data?.code === 'UNVERIFIED') {
-        setShowOtp(true);
-        setError('');
-      } else {
-        setError(err.response?.data?.message || 'Failed to login. Please try again.');
-      }
+      setError(err.response?.data?.message || 'Failed to login. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerified = (userData: Record<string, unknown>) => {
-    login({ ...userData, privateKey: tempPrivateKey } as Parameters<typeof login>[0]);
-    navigate('/chat');
-  };
 
   //const handleGoogleSuccess = async (credentialResponse: any) => {
   //  try {
@@ -85,12 +69,10 @@ const Login = () => {
         </div>
         
         <h2 className="text-3xl font-bold text-center text-gray-900 mb-2">
-          {showOtp ? 'Verify your email' : 'Welcome back'}
+          Welcome back
         </h2>
         <p className="text-center text-gray-500 mb-8">
-          {showOtp
-            ? 'Your account needs email verification before you can sign in'
-            : 'Sign in to your account to continue'}
+          Sign in to your account to continue
         </p>
 
         {error && (
@@ -99,17 +81,6 @@ const Login = () => {
           </div>
         )}
 
-        {showOtp ? (
-          <VerifyOtpForm
-            email={email}
-            publicKey={tempPublicKey || undefined}
-            onVerified={handleVerified}
-            onBack={() => setShowOtp(false)}
-            submitLabel="Verify & Sign In"
-            sendOnMount
-          />
-        ) : (
-          <>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
@@ -178,8 +149,7 @@ const Login = () => {
                 size="large"
               />
             </div> */}
-          </>
-        )}
+
 
         <p className="mt-8 text-center text-sm text-gray-600">
           Don't have an account?{' '}

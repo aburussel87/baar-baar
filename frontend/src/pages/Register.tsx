@@ -5,15 +5,11 @@ import { MessageSquare, Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-rea
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { generateKeyPair } from '../utils/crypto';
-import VerifyOtpForm from '../components/VerifyOtpForm';
 
 const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showOtp, setShowOtp] = useState(false);
-  const [tempPrivateKey, setTempPrivateKey] = useState<string | null>(null);
-  const [tempPublicKey, setTempPublicKey] = useState<string | null>(null);
 
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -30,19 +26,16 @@ const Register = () => {
 
     try {
       const keys = await generateKeyPair();
-      setTempPrivateKey(keys.privateKey);
-      setTempPublicKey(keys.publicKey);
-
       const response = await api.post('/api/auth/register', { 
         name, 
         email, 
         password,
         publicKey: keys.publicKey
       });
-      
       if (response.data.success) {
         setSuccessMsg(response.data.message);
-        setShowOtp(true);
+        login({ ...response.data.data, privateKey: keys.privateKey });
+        navigate('/chat');
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to register. Please try again.');
@@ -51,10 +44,6 @@ const Register = () => {
     }
   };
 
-  const handleVerified = (userData: Record<string, unknown>) => {
-    login({ ...userData, privateKey: tempPrivateKey } as Parameters<typeof login>[0]);
-    navigate('/chat');
-  };
 
   // const handleGoogleSuccess = async (credentialResponse: any) => {
   //   try {
@@ -85,10 +74,10 @@ const Register = () => {
         </div>
         
         <h2 className="text-3xl font-bold text-center text-gray-900 mb-2">
-          {showOtp ? 'Verify your email' : 'Create an account'}
+          Create an account
         </h2>
         <p className="text-center text-gray-500 mb-8">
-          {showOtp ? 'Enter the code we sent to your inbox' : 'Get started with your free account'}
+          Get started with your free account
         </p>
 
         {error && (
@@ -97,13 +86,12 @@ const Register = () => {
           </div>
         )}
 
-        {successMsg && !showOtp && (
+        {successMsg && (
           <div className="bg-green-50 text-green-600 p-4 rounded-xl mb-6 text-sm border border-green-100">
             {successMsg}
           </div>
         )}
 
-        {!showOtp ? (
           <form onSubmit={handleRegisterSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
@@ -190,14 +178,6 @@ const Register = () => {
               />
             </div> */}
           </form>
-        ) : (
-          <VerifyOtpForm
-            email={email}
-            publicKey={tempPublicKey || undefined}
-            onVerified={handleVerified}
-            onBack={() => setShowOtp(false)}
-          />
-        )}
 
         <p className="mt-8 text-center text-sm text-gray-600">
           Already have an account?{' '}
