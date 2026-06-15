@@ -1,5 +1,10 @@
 import nodemailer from 'nodemailer';
 import { env } from '../config/env';
+import dns from 'dns';
+
+// Force Node.js to use IPv4 first for DNS resolution
+// This prevents ENETUNREACH errors on platforms like Render that have broken IPv6
+dns.setDefaultResultOrder('ipv4first');
 
 export const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
