@@ -18,6 +18,11 @@ export function base64ToArrayBuffer(base64: string) {
 }
 
 export const generateKeyPair = async () => {
+  if (!window.crypto || !window.crypto.subtle) {
+    console.warn("Web Crypto API is not available (likely insecure context). E2EE will be disabled.");
+    return { publicKey: null, privateKey: null };
+  }
+
   const keyPair = await window.crypto.subtle.generateKey(
     {
       name: "RSA-OAEP",

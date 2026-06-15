@@ -43,6 +43,10 @@ export const sendOTPEmail = async (email: string, otp: string): Promise<SendOtpR
         user: env.SMTP_USER,
         pass: env.SMTP_PASS,
       },
+      tls: {
+        rejectUnauthorized: false,
+      },
+      ...({ family: 4 } as any),
     });
 
     await transporter.verify();

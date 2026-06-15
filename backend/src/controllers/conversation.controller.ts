@@ -27,6 +27,7 @@ export const getConversations = async (req: AuthRequest, res: Response) => {
                 name: true,
                 email: true,
                 avatar: true,
+                publicKey: true,
               },
             },
           },
@@ -75,7 +76,7 @@ export const createConversation = async (req: AuthRequest, res: Response) => {
         participants: {
           include: {
             user: {
-              select: { id: true, name: true, email: true, avatar: true },
+              select: { id: true, name: true, email: true, avatar: true, publicKey: true },
             },
           },
         },
@@ -101,7 +102,7 @@ export const createConversation = async (req: AuthRequest, res: Response) => {
         participants: {
           include: {
             user: {
-              select: { id: true, name: true, email: true, avatar: true },
+              select: { id: true, name: true, email: true, avatar: true, publicKey: true },
             },
           },
         },
@@ -137,7 +138,7 @@ export const getConversationById = async (req: AuthRequest, res: Response) => {
         participants: {
           include: {
             user: {
-              select: { id: true, name: true, email: true, avatar: true },
+              select: { id: true, name: true, email: true, avatar: true, publicKey: true },
             },
           },
         },
@@ -187,7 +188,7 @@ export const createGroupConversation = async (req: AuthRequest, res: Response) =
         participants: {
           include: {
             user: {
-              select: { id: true, name: true, email: true, avatar: true },
+              select: { id: true, name: true, email: true, avatar: true, publicKey: true },
             },
           },
         },

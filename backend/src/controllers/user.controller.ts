@@ -52,6 +52,7 @@ export const searchUsers = async (req: AuthRequest, res: Response) => {
         name: true,
         email: true,
         avatar: true,
+        publicKey: true,
       },
       take: 20,
     });

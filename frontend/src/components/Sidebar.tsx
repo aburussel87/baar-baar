@@ -4,8 +4,36 @@ import { Search, LogOut, MessageSquare, Users, X, Loader2, Settings } from 'luci
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
-//import { decryptMessageWithPrivateKey } from '../utils/crypto';
+import { decryptMessageWithPrivateKey } from '../utils/crypto';
 import type { Conversation, User } from '../types';
+
+const DecryptedSnippet = ({ body, user }: { body: string; user: any }) => {
+  const [decryptedBody, setDecryptedBody] = useState<string>('Decrypting...');
+
+  React.useEffect(() => {
+    let isMounted = true;
+    const decrypt = async () => {
+      if (body.startsWith('{"v":1')) {
+        if (!user?.privateKey || !user?.publicKey) {
+          if (isMounted) setDecryptedBody("[Encrypted Message]");
+          return;
+        }
+        try {
+          const decrypted = await decryptMessageWithPrivateKey(body, user.publicKey, user.privateKey);
+          if (isMounted) setDecryptedBody(decrypted);
+        } catch (e) {
+          if (isMounted) setDecryptedBody("[Decryption Failed]");
+        }
+      } else {
+        if (isMounted) setDecryptedBody(body);
+      }
+    };
+    decrypt();
+    return () => { isMounted = false; };
+  }, [body, user]);
+
+  return <>{decryptedBody}</>;
+};
 
 interface SidebarProps {
   activeConversation: Conversation | null;
@@ -121,13 +149,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeConversation, setActiveConversa
     } finally {
       setSettingsLoading(false);
     }
-  };
-
-  const decryptLastMessage = (body: string) => {
-    if (body.startsWith('{"v":1')) {
-       return "[Encrypted Message]"; // Decrypting synchronously is tricky, just show label in sidebar
-    }
-    return body;
   };
 
   return (
@@ -375,7 +396,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeConversation, setActiveConversa
                         )}
                       </div>
                       <p className={`text-sm truncate ${lastMessage?.status !== 'READ' && lastMessage?.senderId !== user?.id ? 'font-semibold text-gray-800' : 'text-gray-500'}`}>
-                        {lastMessage?.body ? decryptLastMessage(lastMessage.body) : (isGroup ? 'Group created' : 'Started a conversation')}
+                        {lastMessage?.body ? <DecryptedSnippet body={lastMessage.body} user={user} /> : (isGroup ? 'Group created' : 'Started a conversation')}
                       </p>
                     </div>
                   </div>
